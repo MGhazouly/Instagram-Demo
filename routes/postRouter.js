@@ -1,5 +1,5 @@
 const express = require('express')
-const { createPost, getPosts, getUserPosts, getPost } = require('../controller/postController')
+const { createPost, getPosts, getUserPosts, getPost, getPagePostData } = require('../controller/postController')
 
 
 
@@ -17,6 +17,7 @@ router.get('/userPosts', getUserPosts)
 router.post('/post', createPost)
 
 
+router.get("/PostCompData", getPagePostData)
 
 
 

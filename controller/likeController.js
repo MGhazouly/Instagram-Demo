@@ -4,12 +4,12 @@ const dotenv = require('dotenv').config()
 
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
-    user:  process.env.MYSQL_USER,
-    password:  process.env.MYSQL_PASSWORD,
-    database:  process.env.MYSQL_DATABASE,
-  }).promise()
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+}).promise()
 
-  const likePost = async (req, res) => {
+const likePost = async (req, res) => {
     const {
         postId,
         userId,
@@ -17,29 +17,43 @@ const pool = mysql.createPool({
     } = req.body
     try {
 
-        if(!postId || !userId)
+        if (!postId || !userId)
             throw Error('All fields must be filled')
 
-        const [result] = await pool.query(`
-        INSERT INTO Likes (PostID, UserID)
-        VALUES (?, ?)
-        `, [postId, userId])
-
-        const id = result.insertId
-        const [likes] = await pool.query(`
-        SELECT * 
+        //Check if the user already liked the post
+        const [isLiked] = await pool.query(`
+        SELECT *
         FROM Likes
-        WHERE LikeID = ?
-        `, [id])
+        WHERE PostID = ? AND UserID = ?
+        `, [postId, userId])
+        if (isLiked.length == 0) {
+            const [result] = await pool.query(`
+            INSERT INTO Likes (PostID, UserID)
+            VALUES (?, ?)
+            `, [postId, userId])
+            //incerement the postlikescounter 
+            const [post] = await pool.query(`
+            SELECT *
+            FROM Posts
+            WHERE PostID = ?
+            `, [postId])
+            const likes = post[0].LikesCounter + 1
 
-        if(![likes])
-        {
-            throw Error('User not fould in Database')
+            const [result2] = await pool.query(`
+            UPDATE Posts
+            SET LikesCounter = ?
+            WHERE PostID = ?
+            `, [likes, postId])
+            return res.status(201).json({ message: 'Post liked' });
+
         }
-        
-    
-    
-    return res.status(201).json(likes);
+        else {
+            return res.status(201).json({ message: 'Already liked it before' });
+
+        }
+
+
+
 
 
 
@@ -76,18 +90,18 @@ const getlike = async (req, res) => {
     } = req.body
     try {
 
-        if(!likeId )
+        if (!likeId)
             throw Error('All fields must be filled')
 
-            
+
         const [likes] = await pool.query(`
         SELECT * 
         FROM likes
         WHERE LikeID = ?
         `, [likeId])
 
-    
-     return res.status(201).json([likes][0]);
+
+        return res.status(201).json([likes][0]);
 
 
 
@@ -104,18 +118,18 @@ const getUserLikes = async (req, res) => {
     } = req.body
     try {
 
-        if(!userId)
+        if (!userId)
             throw Error('All fields must be filled')
 
-            
+
         const [likes] = await pool.query(`
         SELECT * 
         FROM likes
         WHERE UserID = ? 
         `, [userId])
 
-    
-     return res.status(201).json([likes]);
+
+        return res.status(201).json([likes]);
 
 
 
@@ -132,18 +146,18 @@ const getPostLikes = async (req, res) => {
     } = req.body
     try {
 
-        if(!postId)
+        if (!postId)
             throw Error('All fields must be filled')
 
-            
+
         const [likes] = await pool.query(`
         SELECT * 
         FROM likes
         WHERE PostID = ? 
         `, [postId])
 
-    
-     return res.status(201).json([likes]);
+
+        return res.status(201).json([likes]);
 
 
 
@@ -156,11 +170,11 @@ const getPostLikes = async (req, res) => {
 
 module.exports = {
 
-    
+
     likePost,
     getLikes,
     getlike,
     getUserLikes,
     getPostLikes,
 
-  };
+};

@@ -4,12 +4,12 @@ const dotenv = require('dotenv').config()
 
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
-    user:  process.env.MYSQL_USER,
-    password:  process.env.MYSQL_PASSWORD,
-    database:  process.env.MYSQL_DATABASE,
-  }).promise()
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+}).promise()
 
-  const createComment = async (req, res) => {
+const createComment = async (req, res) => {
     const {
         postId,
         userId,
@@ -18,7 +18,7 @@ const pool = mysql.createPool({
     } = req.body
     try {
 
-        if(!postId || !userId || ! commentText)
+        if (!postId || !userId || !commentText)
             throw Error('All fields must be filled')
 
         const [result] = await pool.query(`
@@ -26,21 +26,22 @@ const pool = mysql.createPool({
         VALUES (?, ?, ?)
         `, [postId, userId, commentText])
 
-        const id = result.insertId
-        const [comments] = await pool.query(`
-        SELECT * 
-        FROM Comments
-        WHERE CommentID = ?
-        `, [id])
+        //Increment the post comments counter
+        const [post] = await pool.query(`
+        SELECT *
+        FROM Posts
+        WHERE PostID = ?
+        `, [postId])
+        const comments = post[0].CommentCounter + 1
 
-        if(![comments])
-        {
-            throw Error('User not fould in Database')
-        }
-        
-    
-    
-    return res.status(201).json(comments);
+        const [result2] = await pool.query(`
+        UPDATE Posts
+        SET CommentCounter = ?
+        WHERE PostID = ?
+        `, [comments, postId])
+
+
+        return res.status(201).json({ message: 'Comment created' });
 
 
 
@@ -54,13 +55,30 @@ const pool = mysql.createPool({
 
 const getComments = async (req, res) => {
     const {
+        postId,
     } = req.body
     try {
 
-        const [comments] = await pool.query("select * from comments")
+        if (!postId) {
+            throw Error('All fields must be filled')
+        }
+        const [comments] = await pool.query("select * from comments where PostID = ?", [postId])
+        const result = await Promise.all(comments.map(async comment => {
+            const [userCommented] = await pool.query("select * from users where UserID = ?", [comment.UserID])
 
 
-        return res.status(201).json([comments]);
+            return {
+                "FirstNameCommented": userCommented[0].Firstname,
+                "LastNameCommented": userCommented[0].Lastname,
+                "CommentText": comment.CommentText,
+                "CommentDate": comment.CommentDate
+            };
+        }));
+
+
+
+
+        return res.status(201).json(result);
 
 
 
@@ -77,18 +95,18 @@ const getComment = async (req, res) => {
     } = req.body
     try {
 
-        if(!commentId )
+        if (!commentId)
             throw Error('All fields must be filled')
 
-            
+
         const [comments] = await pool.query(`
         SELECT * 
         FROM comments
         WHERE CommentID = ?
         `, [commentId])
 
-    
-     return res.status(201).json([comments][0]);
+
+        return res.status(201).json([comments][0]);
 
 
 
@@ -104,18 +122,18 @@ const getUserComments = async (req, res) => {
     } = req.body
     try {
 
-        if(!userId)
+        if (!userId)
             throw Error('All fields must be filled')
 
-            
+
         const [comments] = await pool.query(`
         SELECT * 
         FROM comments
         WHERE UserID = ? 
         `, [userId])
 
-    
-     return res.status(201).json([comments]);
+
+        return res.status(201).json([comments]);
 
 
 
@@ -133,18 +151,18 @@ const getUserPostsComments = async (req, res) => {
     } = req.body
     try {
 
-        if(!userId || !postId)
+        if (!userId || !postId)
             throw Error('All fields must be filled')
 
-            
+
         const [posts] = await pool.query(`
         SELECT * 
         FROM comments
         WHERE UserID = ? AND PostID = ?
-        `, [userId , postId])
+        `, [userId, postId])
 
-    
-     return res.status(201).json([posts]);
+
+        return res.status(201).json([posts]);
 
 
 
@@ -157,11 +175,11 @@ const getUserPostsComments = async (req, res) => {
 
 module.exports = {
 
-    
+
     createComment,
     getComments,
     getComment,
     getUserComments,
     getUserPostsComments,
 
-  };
+};

@@ -8,7 +8,7 @@ const router = express.Router()
 
 
 
-router.get('/comments', getComments)
+router.post('/comments', getComments)
 
 router.get('/comment', getComment)
 

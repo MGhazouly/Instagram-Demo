@@ -3,12 +3,12 @@ const dotenv = require('dotenv').config()
 
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
-    user:  process.env.MYSQL_USER,
-    password:  process.env.MYSQL_PASSWORD,
-    database:  process.env.MYSQL_DATABASE,
-  }).promise()
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+}).promise()
 
-  const createUser = async (req, res) => {
+const createUser = async (req, res) => {
     const {
         firstname,
         lastname,
@@ -19,13 +19,13 @@ const pool = mysql.createPool({
     } = req.body
     try {
 
-        if(!firstname || !lastname  || !email || !username || ! password)
+        if (!firstname || !lastname || !email || !username || !password)
             throw Error('All fields must be filled')
 
         const [result] = await pool.query(`
         INSERT INTO users (UserName, Password, Firstname, Lastname,email)
         VALUES (?, ?, ?, ?, ?)
-        `, [username, password,firstname,lastname,email])
+        `, [username, password, firstname, lastname, email])
 
         const id = result.insertId
         const [users] = await pool.query(`
@@ -34,14 +34,13 @@ const pool = mysql.createPool({
         WHERE UserID = ?
         `, [id])
 
-        if(![users])
-        {
+        if (![users]) {
             throw Error('User not fould in Database')
         }
-        
-    
-    
-    return res.status(201).json(users[0]);
+
+
+
+        return res.status(201).json(users[0]);
 
 
 
@@ -76,24 +75,59 @@ const getAllUsers = async (req, res) => {
     }
 }
 
-const getUser = async (req, res) => {
+
+const isLiked = async (req, res) => {
     const {
-        id,
+        postId,
+        userId,
     } = req.body
     try {
 
-        if(!id )
+        if (!postId)
             throw Error('All fields must be filled')
 
-            
+        if (!userId)
+            return res.status(201).json(false);
+
+        const [rows] = await pool.query(`
+        SELECT * 
+        FROM Likes
+        WHERE PostID = ? AND UserID = ?
+        `, [postId, userId])
+
+        if (![rows]) {
+            return res.status(201).json(false);
+        }
+        else {
+            return res.status(201).json(true);
+        }
+
+    } catch (error) {
+        res.status(400).json({
+            error: error.message
+        })
+
+    }
+}
+
+const getUser = async (req, res) => {
+    const {
+        id,
+    } = req.body.userId
+    try {
+
+        if (!id)
+            throw Error('All fields must be filled')
+
+
         const [users] = await pool.query(`
         SELECT * 
         FROM users
         WHERE UserID = ?
         `, [id])
 
-    
-     return res.status(201).json(users[0]);
+
+        return res.status(201).json(users[0]);
 
 
 
@@ -106,12 +140,13 @@ const getUser = async (req, res) => {
 
 module.exports = {
 
-    
+
     createUser,
-   
+
     getAllUsers,
 
     getUser,
 
+    isLiked
 
-  };
+};

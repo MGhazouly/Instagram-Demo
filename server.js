@@ -2,6 +2,7 @@ const express = require('express')
 
 const bodyParser = require('body-parser')
 const dotenv = require('dotenv').config()
+const cors = require('cors');
 
 
 const app = express()
@@ -20,6 +21,12 @@ app.use(bodyParser.urlencoded({
     extended: false
 })); // Parses urlencoded bodies
 app.use(bodyParser.json());
+
+app.use(cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: false,
+}));
 
 
 

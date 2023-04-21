@@ -2,15 +2,16 @@
 const mysql = require('mysql2')
 const dotenv = require('dotenv').config()
 
+const { isLiked, getUser } = require('../controller/userController')
 
 const pool = mysql.createPool({
     host: process.env.MYSQL_HOST,
-    user:  process.env.MYSQL_USER,
-    password:  process.env.MYSQL_PASSWORD,
-    database:  process.env.MYSQL_DATABASE,
-  }).promise()
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+}).promise()
 
-  const createPost = async (req, res) => {
+const createPost = async (req, res) => {
     const {
         userId,
         imageUrl,
@@ -18,7 +19,7 @@ const pool = mysql.createPool({
     } = req.body
     try {
 
-        if(!userId || !imageUrl )
+        if (!userId || !imageUrl)
             throw Error('All fields must be filled')
 
         const [result] = await pool.query(`
@@ -33,14 +34,13 @@ const pool = mysql.createPool({
         WHERE PostID = ?
         `, [id])
 
-        if(![posts])
-        {
+        if (![posts]) {
             throw Error('User not fould in Database')
         }
-        
-    
-    
-    return res.status(201).json(posts);
+
+
+
+        return res.status(201).json(posts);
 
 
 
@@ -53,12 +53,10 @@ const pool = mysql.createPool({
 }
 
 const getPosts = async (req, res) => {
-    const {
-    } = req.body
+
     try {
 
         const [posts] = await pool.query("select * from posts")
-
 
         return res.status(201).json([posts]);
 
@@ -77,18 +75,18 @@ const getUserPosts = async (req, res) => {
     } = req.body
     try {
 
-        if(!userId )
+        if (!userId)
             throw Error('All fields must be filled')
 
-            
+
         const [posts] = await pool.query(`
         SELECT * 
         FROM posts
         WHERE UserID = ?
         `, [userId])
 
-    
-     return res.status(201).json([posts]);
+
+        return res.status(201).json([posts]);
 
 
 
@@ -105,18 +103,18 @@ const getPost = async (req, res) => {
     } = req.body
     try {
 
-        if(!postId )
+        if (!postId)
             throw Error('All fields must be filled')
 
-            
+
         const [posts] = await pool.query(`
         SELECT * 
         FROM posts
         WHERE PostID = ?
         `, [postId])
 
-    
-     return res.status(201).json([posts][0]);
+
+        return res.status(201).json([posts][0]);
 
 
 
@@ -127,11 +125,85 @@ const getPost = async (req, res) => {
     }
 }
 
+const getPagePostData = async (req, res) => {
+
+    /*
+//given the user id from the body, return the following data:
+
+ 1)return all posts using getPosts function 
+ 2)for each post get the user first name and 
+   last name using the post id  
+ 3)if a user id exist.loop in the likes table
+  with the user id and the post id and search
+  if the userid exist or not in them if yes
+ return true or false.
+
+Final Return 
+{
+1)user firstname,lastname
+2)image url
+3)number of comments
+4)number of likes
+5)liked:bolean 
+
+}
+*/
+
+    try {
+
+        const [posts] = await pool.query("select * from posts")
+        const result = await Promise.all(posts.map(async post => {
+            const [author] = await pool.query(`
+            SELECT * 
+            FROM users
+            WHERE UserID = ?
+            `, [post.UserID]) // retrieve author's name
+
+            let liked = false // check if user liked post
+            if (req.body.userId) {
+                const [rows] = await pool.query(`
+                SELECT * 
+                FROM Likes
+                WHERE PostID = ? AND UserID = ?
+                `, [post.PostID, req.body.userId])
+
+                if (rows.length > 0) {
+                    liked = true;
+                }
+
+            }
+
+
+
+
+
+            return {
+                postID: post.PostID,
+                authorID: author[0].UserID,
+                firstname: author[0].Firstname,
+                lastname: author[0].Lastname,
+                imageUrl: post.PostImage,
+                postDate: post.PostDate,
+                CommentCounter: post.CommentCounter,
+                LikesCounter: post.LikesCounter,
+                liked: liked
+            };
+        }));
+
+        return res.status(201).json(result);
+    } catch (error) {
+        res.status(400).json({
+            error: error.message
+        })
+    }
+
+
+}
 module.exports = {
 
-    
+    getPagePostData,
     createPost,
     getPosts,
     getUserPosts,
     getPost,
-  };
+};
