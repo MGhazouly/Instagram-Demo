@@ -7,6 +7,7 @@ const pool = mysql.createPool({
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
+    waitForConnections: true,
 }).promise()
 
 const createComment = async (req, res) => {
@@ -62,9 +63,9 @@ const getComments = async (req, res) => {
         if (!postId) {
             throw Error('All fields must be filled')
         }
-        const [comments] = await pool.query("select * from comments where PostID = ?", [postId])
+        const [comments] = await pool.query("select * from Comments where PostID = ?", [postId])
         const result = await Promise.all(comments.map(async comment => {
-            const [userCommented] = await pool.query("select * from users where UserID = ?", [comment.UserID])
+            const [userCommented] = await pool.query("select * from Users where UserID = ?", [comment.UserID])
 
 
             return {
@@ -101,7 +102,7 @@ const getComment = async (req, res) => {
 
         const [comments] = await pool.query(`
         SELECT * 
-        FROM comments
+        FROM Comments
         WHERE CommentID = ?
         `, [commentId])
 
@@ -128,7 +129,7 @@ const getUserComments = async (req, res) => {
 
         const [comments] = await pool.query(`
         SELECT * 
-        FROM comments
+        FROM Comments
         WHERE UserID = ? 
         `, [userId])
 
@@ -157,7 +158,7 @@ const getUserPostsComments = async (req, res) => {
 
         const [posts] = await pool.query(`
         SELECT * 
-        FROM comments
+        FROM Comments
         WHERE UserID = ? AND PostID = ?
         `, [userId, postId])
 

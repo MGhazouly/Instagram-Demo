@@ -13,7 +13,7 @@ router.get('/users', getAllUsers)
 
 router.get('/user', getUser)
 
-router.post('/Register', userExists, Register)
+router.post('/Register', Register)
 
 router.post('/Login', passport.authenticate('local'), (req, res) => {
   console.log('inside login');

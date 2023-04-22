@@ -7,6 +7,8 @@ const pool = mysql.createPool({
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
+    waitForConnections: true,
+
 }).promise()
 
 const likePost = async (req, res) => {
@@ -70,7 +72,7 @@ const getLikes = async (req, res) => {
     } = req.body
     try {
 
-        const [likes] = await pool.query("select * from likes")
+        const [likes] = await pool.query("select * from Likes")
 
 
         return res.status(201).json([likes]);
@@ -96,7 +98,7 @@ const getlike = async (req, res) => {
 
         const [likes] = await pool.query(`
         SELECT * 
-        FROM likes
+        FROM Likes
         WHERE LikeID = ?
         `, [likeId])
 
@@ -124,7 +126,7 @@ const getUserLikes = async (req, res) => {
 
         const [likes] = await pool.query(`
         SELECT * 
-        FROM likes
+        FROM Likes
         WHERE UserID = ? 
         `, [userId])
 
@@ -152,7 +154,7 @@ const getPostLikes = async (req, res) => {
 
         const [likes] = await pool.query(`
         SELECT * 
-        FROM likes
+        FROM Likes
         WHERE PostID = ? 
         `, [postId])
 

@@ -9,6 +9,8 @@ const pool = mysql.createPool({
   port: process.env.MYSQL_PORT,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE,
+  waitForConnections: true,
+
 }).promise()
 
 
@@ -23,7 +25,7 @@ const verifyCallback = async (username, password, done) => {
   console.log(" inside verify callback")
 
   try {
-    let [results] = await pool.query('SELECT * FROM users WHERE UserName = ? ', [username]);
+    let [results] = await pool.query('SELECT * FROM Users WHERE UserName = ? ', [username]);
     if (results.length == 0) { return done("Wrong username or password", false) }
     const isValid = validPassword(password, results[0].hash, results[0].salt);
     user = { UserID: results[0].UserID, UserName: results[0].UserName, hash: results[0].hash, salt: results[0].salt, Firstname: results[0].Firstname, Lastname: results[0].Lastname };
@@ -49,6 +51,6 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async function (userId, done) {
   console.log('deserializeUser' + userId);
-  let [results] = await pool.query('SELECT * FROM users where UserID = ?', [userId])
+  let [results] = await pool.query('SELECT * FROM Users where UserID = ?', [userId])
   done(null, results[0]);
 });

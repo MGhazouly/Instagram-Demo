@@ -9,6 +9,8 @@ const pool = mysql.createPool({
     port: process.env.MYSQL_PORT,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
+    waitForConnections: true,
+
 }).promise()
 
 const createPost = async (req, res) => {
@@ -56,7 +58,7 @@ const getPosts = async (req, res) => {
 
     try {
 
-        const [posts] = await pool.query("select * from posts")
+        const [posts] = await pool.query("select * from Posts")
 
         return res.status(201).json([posts]);
 
@@ -81,7 +83,7 @@ const getUserPosts = async (req, res) => {
 
         const [posts] = await pool.query(`
         SELECT * 
-        FROM posts
+        FROM Posts
         WHERE UserID = ?
         `, [userId])
 
@@ -109,7 +111,7 @@ const getPost = async (req, res) => {
 
         const [posts] = await pool.query(`
         SELECT * 
-        FROM posts
+        FROM Posts
         WHERE PostID = ?
         `, [postId])
 
@@ -151,11 +153,11 @@ Final Return
 
     try {
 
-        const [posts] = await pool.query("select * from posts")
+        const [posts] = await pool.query("select * from Posts")
         const result = await Promise.all(posts.map(async post => {
             const [author] = await pool.query(`
             SELECT * 
-            FROM users
+            FROM Users
             WHERE UserID = ?
             `, [post.UserID]) // retrieve author's name
 

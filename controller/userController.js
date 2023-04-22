@@ -8,6 +8,8 @@ const pool = mysql.createPool({
     port: process.env.MYSQL_PORT,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
+    waitForConnections: true,
+
 }).promise()
 
 const createUser = async (req, res) => {
@@ -25,14 +27,14 @@ const createUser = async (req, res) => {
             throw Error('All fields must be filled')
 
         const [result] = await pool.query(`
-        INSERT INTO users (UserName, Password, Firstname, Lastname,email)
+        INSERT INTO Users (UserName, Password, Firstname, Lastname,email)
         VALUES (?, ?, ?, ?, ?)
         `, [username, password, firstname, lastname, email])
 
         const id = result.insertId
         const [users] = await pool.query(`
         SELECT * 
-        FROM users
+        FROM Users
         WHERE UserID = ?
         `, [id])
 
@@ -62,7 +64,7 @@ const getAllUsers = async (req, res) => {
     } = req.body
     try {
 
-        const [rows] = await pool.query("select * from users")
+        const [rows] = await pool.query("select * from Users")
         console.log(rows)
 
         return res.status(201).json([rows]);
@@ -124,7 +126,7 @@ const getUser = async (req, res) => {
 
         const [users] = await pool.query(`
         SELECT * 
-        FROM users
+        FROM Users
         WHERE UserID = ?
         `, [id])
 
@@ -157,7 +159,7 @@ async function userExists(req, res, next) {
         res.status(400).send("Please enter all fields");
     }
     try {
-        let [user] = await pool.query('SELECT * FROM users where UserName = ? ', [req.body.username]);
+        let [user] = await pool.query('SELECT * FROM Users where UserName = ? ', [req.body.username]);
         if (user.length > 0) {
             res.status(400).send("User already exists");
         }
@@ -194,7 +196,7 @@ const Register = async (req, res, next) => {
     const salt = saltHash.salt;
     const hash = saltHash.hash;
     try {
-        await pool.query('Insert into users(UserName,hash,salt,Firstname,Lastname) values(?,?,?,?,?) ', [req.body.username, hash, salt, Firstname, Lastname]);
+        await pool.query('Insert into Users(UserName,hash,salt,Firstname,Lastname) values(?,?,?,?,?) ', [req.body.username, hash, salt, Firstname, Lastname]);
         res.status(200).send("User created");
     } catch (err) { res.status(500).send(err) }
 
