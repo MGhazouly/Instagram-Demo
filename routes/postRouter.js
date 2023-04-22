@@ -17,7 +17,7 @@ router.get('/userPosts', getUserPosts)
 router.post('/post', createPost)
 
 
-router.get("/PostCompData", getPagePostData)
+router.post("/PostCompData", getPagePostData)
 
 
 

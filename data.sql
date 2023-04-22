@@ -4,10 +4,10 @@ use InstaAppDB2;
 CREATE TABLE Users (
     UserID int NOT NULL AUTO_INCREMENT,
     UserName varchar(50) NOT NULL,
-    Password varchar(50) NOT NULL,
-    Firstname varchar(50) NOT NULL,
+    hash varchar(200) NOT NULL,
+    salt varchar(100) NOT NULL,
     Lastname varchar(50) NOT NULL,
-    Email varchar(50) NOT NULL,
+    Firstname varchar(50) NOT NULL,
     PRIMARY KEY (UserID)
 );
 CREATE TABLE Posts(
@@ -44,9 +44,9 @@ CREATE TABLE Likes(
 );
 
 
-Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user4', 'password1', 'John', 'Doe',"hi@gmail.com");
-Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user5', 'password2', 'Jane', 'Doe',"hi@gmail.com");
-Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user6', 'password3', 'John', 'Smith',"hi@gmail.com");
+Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user4', 'password1', 'John');
+Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user5', 'password2', 'Jane', 'Doe');
+Insert into Users (UserName, Password, Firstname, Lastname,Email) values ('user6', 'password3', 'John', 'Smith');
 
 Insert into Posts (UserID, PostImage) values (1, 'https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png');
 Insert into Posts (UserID, PostImage) values (2, 'https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png');
@@ -57,9 +57,8 @@ Insert into Comments (PostID, UserID, CommentText) values (2, 2, 'This is a comm
 Insert into Comments (PostID, UserID, CommentText) values (3, 3, 'This is a comment');
 
 
-
-
-
+ALTER TABLE Users
+DROP COLUMN Email;
 
 Select * from users;
 
